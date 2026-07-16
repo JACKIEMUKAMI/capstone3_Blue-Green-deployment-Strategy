@@ -1,0 +1,27 @@
+﻿import boto3
+
+def lambda_handler(event, context):
+    # Create ELBv2 client
+    client = boto3.client('elbv2')
+    
+    # Paste your actual ARNs here
+    listener_arn = "arn:aws:elasticloadbalancing:us-west-2:267673636077:listener/app/bluegreenloadbalancer/aebb04c6f8d89a21/14c2fb404895240f"
+    blue_tg_arn = "arn:aws:elasticloadbalancing:us-west-2:267673636077:targetgroup/bluetargetg/fc440a59989414c2"
+    green_tg_arn = "arn:aws:elasticloadbalancing:us-west-2:267673636077:targetgroup/greentargetg/3dadf90e570539fb"
+    
+    # Modify listener to send 100% traffic to Blue, 0% to Green
+    response = client.modify_listener(
+        ListenerArn=listener_arn,
+        DefaultActions=[{
+            'Type': 'forward',
+            'ForwardConfig': {
+                'TargetGroups': [
+                    {'TargetGroupArn': blue_tg_arn, 'Weight': 100},
+                    {'TargetGroupArn': green_tg_arn, 'Weight': 0}
+                ]
+            }
+        }]
+    )
+    
+    print("Listener modified:", response)
+    return "Traffic rolled back to Blue"
